@@ -73,7 +73,17 @@ async function getRaceResult(year, round) {
     
 }
 
-module.exports = { getAllDrivers, getDriver, getDriversWithinYear, getDriversWithinYearRound, getAllCircuits, getSeasonEndDriverStandings, getRaceResult };
+async function getSeasons() {
+    try {
+        const response = await axios.get(API_URL + 'seasons.json?limit=1000');
+        return response.data.MRData.SeasonTable.Seasons;
+    } catch (error) {
+        console.log(error);
+        return error;
+    }
+}
+
+module.exports = { getAllDrivers, getDriver, getDriversWithinYear, getDriversWithinYearRound, getAllCircuits, getSeasonEndDriverStandings, getRaceResult, getSeasons };
 
 
 

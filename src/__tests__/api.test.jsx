@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { getAllDrivers, getDriver, getDriversWithinYear, getDriversWithinYearRound, getAllCircuits, getSeasonEndDriverStandings, getRaceResult } = require('../utilities/api');
+const { getAllDrivers, getDriver, getDriversWithinYear, getDriversWithinYearRound, getAllCircuits, getSeasonEndDriverStandings, getRaceResult, getSeasons } = require('../utilities/api');
 
 jest.mock('axios');
 
@@ -310,6 +310,48 @@ describe('getRaceResult', () => {
 
     expect(result).toEqual(mockError);
     expect(axios.get).toHaveBeenCalledWith(`http://ergast.com/api/f1/${year}/${round}/results.json`);
+  });
+});
+
+//add unit tests for getSeasons
+describe('getSeasons', () => {
+  afterEach(() => {
+    axios.get.mockReset();
+  });
+
+  it('should return an array of seasons', async () => {
+    const mockResponse = {
+      data: {
+        MRData: {
+          SeasonTable: {
+            Seasons: [
+              { season: '2021' },
+              { season: '2020' },
+              { season: '2019' },
+            ],
+          },
+        },
+      },
+    };
+
+    axios.get.mockResolvedValue(mockResponse);
+
+    const API_URL = 'http://ergast.com/api/f1/';
+    const result = await getSeasons();
+
+    expect(result).toEqual(mockResponse.data.MRData.SeasonTable.Seasons);
+    expect(axios.get).toHaveBeenCalledWith(`${API_URL}seasons.json?limit=1000`);
+  });
+
+  it('should handle errors and return the error object', async () => {
+    const mockError = new Error('API error');
+
+    axios.get.mockRejectedValue(mockError);
+    const API_URL = 'http://ergast.com/api/f1/';
+    const result = await getSeasons();
+
+    expect(result).toEqual(mockError);
+    expect(axios.get).toHaveBeenCalledWith(`${API_URL}seasons.json?limit=1000`);
   });
 });
 
