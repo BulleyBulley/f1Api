@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { getAllDrivers, getDriver, getDriversWithinYear, getDriversWithinYearRound, getAllCircuits, getSeasonEndDriverStandings, getRaceResult, getSeasons } = require('../utilities/api');
+const { getAllDrivers, getDriver, getDriversWithinYear, getDriversWithinYearRound, getAllCircuits, getSeasonEndDriverStandings, getRaceResult, getSeasons, getCircuitsWithinAYear } = require('../utilities/api');
 
 jest.mock('axios');
 
@@ -352,6 +352,48 @@ describe('getSeasons', () => {
 
     expect(result).toEqual(mockError);
     expect(axios.get).toHaveBeenCalledWith(`${API_URL}seasons.json?limit=1000`);
+  });
+});
+
+//add tests for getCircuitsWithinAYear
+describe('getCircuitsWithinAYear', () => {
+  afterEach(() => {
+    axios.get.mockReset();
+  });
+
+  it('should return an array of circuits within a specific year', async () => {
+    const year = 2022;
+    const mockResponse = {
+      data: {
+        MRData: {
+          CircuitTable: {
+            Circuits: [
+              { circuitId: 'monza', circuitName: 'Monza Circuit' },
+              { circuitId: 'spa', circuitName: 'Spa-Francorchamps Circuit' }
+            ],
+          },
+        },
+      },
+    };
+
+    axios.get.mockResolvedValue(mockResponse);
+
+    const result = await getCircuitsWithinAYear(year);
+
+    expect(result).toEqual(mockResponse.data.MRData.CircuitTable.Circuits);
+    expect(axios.get).toHaveBeenCalledWith(`http://ergast.com/api/f1/${year}/circuits.json`);
+  });
+
+  it('should handle errors and return the error object', async () => {
+    const year = 2021;
+    const mockError = new Error('API error');
+
+    axios.get.mockRejectedValue(mockError);
+
+    const result = await getCircuitsWithinAYear(year);
+
+    expect(result).toEqual(mockError);
+    expect(axios.get).toHaveBeenCalledWith(`http://ergast.com/api/f1/${year}/circuits.json`);
   });
 });
 

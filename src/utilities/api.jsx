@@ -83,7 +83,17 @@ async function getSeasons() {
     }
 }
 
-module.exports = { getAllDrivers, getDriver, getDriversWithinYear, getDriversWithinYearRound, getAllCircuits, getSeasonEndDriverStandings, getRaceResult, getSeasons };
+async function getCircuitsWithinAYear(year) {
+    try {
+        const response = await axios.get(API_URL + year + '/circuits.json');
+        return response.data.MRData.CircuitTable.Circuits;
+    } catch (error) {
+        console.log(error);
+        return error;
+    }
+}
+
+module.exports = { getAllDrivers, getDriver, getDriversWithinYear, getDriversWithinYearRound, getAllCircuits, getSeasonEndDriverStandings, getRaceResult, getSeasons, getCircuitsWithinAYear };
 
 
 

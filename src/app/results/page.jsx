@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import {
   fetchSeasons,
   fetchSeasonEndDriverStandings,
+  fetchCircuitsWithinAYear,
 } from "../../controllers/resultsController";
 import Box from "@mui/material/Box";
 import InputLabel from "@mui/material/InputLabel";
@@ -16,43 +17,62 @@ const Results = () => {
   const [seasons, setSeasons] = useState([]);
   const [selectedSeason, setSelectedSeason] = useState("");
   const [seasonEndDriverStandings, setSeasonEndDriverStandings] = useState([]);
+  const [circuitsWithinASeason, setCircuitsWithinASeason] = useState([]);
+  const columns = [];
+  const [circuitColumns, setCircuitColumns] = useState([]);
 
-  const handleSelectedSeason = (event) => {
-    //clear the data grid
+  const handleSelectedSeason = async (event) => {
     setSeasonEndDriverStandings([]);
+    setCircuitsWithinASeason([]);
     setSelectedSeason(event.target.value);
-    //populate the data grid with the selected season
-    fetchSeasonEndDriverStandings(event.target.value)
-      .then((data) => setSeasonEndDriverStandings(data))
-      .catch((error) => console.error(error));
+
+    try {
+      const driverStandings = await fetchSeasonEndDriverStandings(event.target.value);
+      setSeasonEndDriverStandings(driverStandings);
+
+      const circuits = await fetchCircuitsWithinAYear(event.target.value);
+      setCircuitsWithinASeason(circuits);
+
+      setupCircuitColumns(circuits);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const flattenData = (data) => {
+  const flattenDriverData = (data) => {
     return data.map((item) => ({
       fullName: item.Driver.givenName + " " + item.Driver.familyName,
       familyName: item.Driver.familyName,
       id: item.Driver.driverId,
       points: item.points,
       position: item.position,
-      // Add other fields as needed
     }));
   };
-  
-  const flattenedSeasonEndDriverStandings = flattenData(seasonEndDriverStandings);
-  
+
+  const flattenedSeasonEndDriverStandings = flattenDriverData(
+    seasonEndDriverStandings
+  );
 
   useEffect(() => {
     fetchSeasons()
       .then((data) => setSeasons(data))
       .catch((error) => console.error(error));
   }, []);
-  
-  //setup columns for data grid
-  const columns = [
-    { field: "fullName", headerName: "Driver", width: 200 },
-    { field: "points", headerName: "Points", width: 130 },
-    
-  ];
+
+  const setupCircuitColumns = (circuits) => {
+    const newColumns = [
+      { field: "fullName", headerName: "Driver", width: 130 },
+      { field: "points", headerName: "Points", width: 130 },
+    ];
+
+    circuits.forEach((circuit) => {
+      newColumns.push({ field: circuit.circuitName, headerName: circuit.circuitName, width: 100 });
+    });
+
+    setCircuitColumns(newColumns);
+  };
+
+
   
 
   return (
@@ -66,7 +86,7 @@ const Results = () => {
         <Select
           labelId="demo-simple-select-label"
           id="demo-simple-select"
-          value={seasons}
+          value={selectedSeason}
           label="Season"
           onChange={handleSelectedSeason}
         >
@@ -82,15 +102,15 @@ const Results = () => {
       </FormControl>
 
       <div className="data-grid-container">
-
       <DataGrid
-        getRowId={(row) => row.position}
-        rows={flattenedSeasonEndDriverStandings}
-        columns={columns}
-        pageSize={10}
-        rowsPerPageOptions={[10]}
-        autoHeight
-        disableSelectionOnClick></DataGrid>        
+          getRowId={(row) => row.position}
+          rows={flattenedSeasonEndDriverStandings}
+          columns={circuitColumns}
+          pageSize={10}
+          rowsPerPageOptions={[10]}
+          autoHeight
+          disableSelectionOnClick
+        ></DataGrid>
       </div>
     </div>
   );

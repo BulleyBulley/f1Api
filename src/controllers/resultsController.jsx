@@ -1,5 +1,5 @@
 // Import the getSeasons function from the API module
-import { getSeasons, getSeasonEndDriverStandings } from '../utilities/api';
+import { getSeasons, getSeasonEndDriverStandings, getCircuitsWithinAYear } from '../utilities/api';
 
 // Define the fetchSeasons function
 const fetchSeasons = async () => {
@@ -21,7 +21,6 @@ const fetchSeasons = async () => {
 const fetchSeasonEndDriverStandings =  async (year) => {
   try {
     const standings = await getSeasonEndDriverStandings(year);
-    console.log(standings);
     return standings;
   } catch (error) {
     console.log(error);
@@ -29,4 +28,14 @@ const fetchSeasonEndDriverStandings =  async (year) => {
   }
 }
 
-export { fetchSeasons, fetchSeasonEndDriverStandings };
+const fetchCircuitsWithinAYear = async (year) => {
+  try {
+    const circuits = await getCircuitsWithinAYear(year);
+    return circuits;
+  } catch (error) {
+    console.log(error);
+    return error;
+  }
+}
+
+export { fetchSeasons, fetchSeasonEndDriverStandings, fetchCircuitsWithinAYear };
