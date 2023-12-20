@@ -396,13 +396,3 @@ describe('getCircuitsWithinAYear', () => {
     expect(axios.get).toHaveBeenCalledWith(`http://ergast.com/api/f1/${year}/circuits.json`);
   });
 });
-
-
-
-
-
-
-
-
-
-

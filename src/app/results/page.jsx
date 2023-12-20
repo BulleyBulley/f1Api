@@ -5,6 +5,7 @@ import {
   fetchSeasons,
   fetchSeasonEndDriverStandings,
   fetchCircuitsWithinAYear,
+  fetchRaceResult,
 } from "../../controllers/resultsController";
 import Box from "@mui/material/Box";
 import InputLabel from "@mui/material/InputLabel";
@@ -12,6 +13,7 @@ import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import { DataGrid } from "@mui/x-data-grid";
+import { DriverSeasonResult } from "../objects/DriverSeasonResult.js";
 
 const Results = () => {
   const [seasons, setSeasons] = useState([]);
@@ -20,60 +22,117 @@ const Results = () => {
   const [circuitsWithinASeason, setCircuitsWithinASeason] = useState([]);
   const columns = [];
   const [circuitColumns, setCircuitColumns] = useState([]);
+  const [raceResults, setRaceResults] = useState([]);
+  const [rowsCombined, setRowsCombined] = useState([]);
 
+  // gets driver standings, then gets circuits for the season and sets selected season
   const handleSelectedSeason = async (event) => {
+    const year = event.target.value;
     setSeasonEndDriverStandings([]);
     setCircuitsWithinASeason([]);
     setSelectedSeason(event.target.value);
-
+    setRaceResults([]);
+    setRowsCombined([]);
+  
     try {
-      const driverStandings = await fetchSeasonEndDriverStandings(event.target.value);
+      const driverStandings = await fetchSeasonEndDriverStandings(year);
       setSeasonEndDriverStandings(driverStandings);
-
-      const circuits = await fetchCircuitsWithinAYear(event.target.value);
+  
+      const circuits = await fetchCircuitsWithinAYear(year);
       setCircuitsWithinASeason(circuits);
-
+  
       setupCircuitColumns(circuits);
+  
+      const numberOfRaces = circuits.length;
+  
+      const raceResultsForSeason = await getRaceResultsForSeason(year, numberOfRaces);
+      setRaceResults(raceResultsForSeason);
+  
+      // Combine driver standings and race results after both are fetched
+      combineDriverStandingsAndRaceResults(driverStandings, raceResultsForSeason);
+  
     } catch (error) {
       console.error(error);
     }
   };
 
-  const flattenDriverData = (data) => {
-    return data.map((item) => ({
-      fullName: item.Driver.givenName + " " + item.Driver.familyName,
-      familyName: item.Driver.familyName,
-      id: item.Driver.driverId,
-      points: item.points,
-      position: item.position,
+  const getRaceResultsForSeason = async (year, numberOfRaces) => {
+    const raceResultArray = [];
+    for (let i = 0; i < numberOfRaces; i++) {
+      const round = i + 1;
+      const raceResult = await fetchRaceResult(year, round);
+      // console.log("raceResult: " + JSON.stringify(raceResult));
+      raceResultArray.push({
+        raceRound: round.toString(),
+        ...raceResult, // Spread the properties of raceResult
+      });
+    }
+    return raceResultArray;
+    // console.log("raceResultArray: " + JSON.stringify(raceResultArray));
+  };
+  
+  
+  const flattenRaceResultsData = (data) => {
+    const flattenedResults = data.map((item, raceRound) => ({
+      raceRound: raceRound + 1, // Assuming raceRound starts from 1
+      racePosition: item[0].position,
+      driverId: item[0].Driver.driverId,
     }));
+  
+    console.log("flattenedRaceResults: ", flattenedResults);
+    return flattenedResults;
+  };
+  
+  
+  
+  const combineDriverStandingsAndRaceResults = (standings, results) => {
+    // console.log("standings: ", standings);
+    // console.log("results: ", results);
+  
+    const flattenedResults = flattenRaceResultsData(results);
+  
+    const combinedData = standings.map((standing) => {
+      const driverId = standing.driverId;
+      const raceResult = flattenedResults.find((result) => result.driverId === driverId);
+      return {
+        ...standing,
+        ...raceResult,
+      };
+    });
+  
+    console.log("combinedData: ", combinedData);
+    setRowsCombined(combinedData);
+  };
+  
+
+  // sets up the circuit columns
+  const setupCircuitColumns = (circuits) => {
+    const newColumns = [
+      { field: "fullName", headerName: "Driver", width: 130 },
+      { field: "seasonEndPoints", headerName: "Points", width: 130 },
+    ];
+    circuits.forEach((circuit) => {
+      newColumns.push({
+        field: circuit.circuitName,
+        headerName: circuit.circuitName,
+        width: 100,
+      });
+    });
+
+    setCircuitColumns(newColumns);
   };
 
-  const flattenedSeasonEndDriverStandings = flattenDriverData(
-    seasonEndDriverStandings
-  );
-
+  // fetches the seasons
   useEffect(() => {
     fetchSeasons()
       .then((data) => setSeasons(data))
       .catch((error) => console.error(error));
   }, []);
 
-  const setupCircuitColumns = (circuits) => {
-    const newColumns = [
-      { field: "fullName", headerName: "Driver", width: 130 },
-      { field: "points", headerName: "Points", width: 130 },
-    ];
-
-    circuits.forEach((circuit) => {
-      newColumns.push({ field: circuit.circuitName, headerName: circuit.circuitName, width: 100 });
-    });
-
-    setCircuitColumns(newColumns);
-  };
-
-
-  
+  useEffect(() => {
+    // Access rowsCombined here or perform any other actions after the state is updated
+    console.log("Rows Combined: ", rowsCombined);
+  }, [rowsCombined]);
 
   return (
     <div className="main-container">
@@ -102,9 +161,10 @@ const Results = () => {
       </FormControl>
 
       <div className="data-grid-container">
-      <DataGrid
-          getRowId={(row) => row.position}
-          rows={flattenedSeasonEndDriverStandings}
+      
+        <DataGrid
+          getRowId={(row) => row.id}
+          rows={rowsCombined}
           columns={circuitColumns}
           pageSize={10}
           rowsPerPageOptions={[10]}
