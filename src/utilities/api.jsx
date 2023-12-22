@@ -65,7 +65,7 @@ async function getSeasonEndDriverStandings(year) {
 async function getRaceResult(year, round) {
     try {
         const response = await axios.get(API_URL + year + '/' + round + '/results.json');
-        return response.data.MRData.RaceTable.Races[0].Results;
+        return response.data;
     } catch (error) {
         console.log(error);
         return error;

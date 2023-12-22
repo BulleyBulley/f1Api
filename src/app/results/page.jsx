@@ -14,6 +14,7 @@ import FormControl from "@mui/material/FormControl";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import { DataGrid } from "@mui/x-data-grid";
 import { DriverSeasonResult } from "../objects/DriverSeasonResult.js";
+import { DriverSeasonRaceResults } from "../objects/DriverSeasonRaceResults.js";
 
 const Results = () => {
   const [seasons, setSeasons] = useState([]);
@@ -47,9 +48,11 @@ const Results = () => {
   
       const raceResultsForSeason = await getRaceResultsForSeason(year, numberOfRaces);
       setRaceResults(raceResultsForSeason);
+      //console.log("raceResultsForSeason: " + JSON.stringify(raceResultsForSeason));
   
       // Combine driver standings and race results after both are fetched
-      combineDriverStandingsAndRaceResults(driverStandings, raceResultsForSeason);
+      const combinedDriverStandingsAndRaceResults = combineDriverStandingsAndRaceResults(driverStandings, raceResultsForSeason);
+      
   
     } catch (error) {
       console.error(error);
@@ -61,48 +64,49 @@ const Results = () => {
     for (let i = 0; i < numberOfRaces; i++) {
       const round = i + 1;
       const raceResult = await fetchRaceResult(year, round);
-      // console.log("raceResult: " + JSON.stringify(raceResult));
-      raceResultArray.push({
-        raceRound: round.toString(),
-        ...raceResult, // Spread the properties of raceResult
-      });
+      //console.log("raceResult: " + JSON.stringify(raceResult));
+      raceResultArray.push(raceResult);
     }
     return raceResultArray;
     // console.log("raceResultArray: " + JSON.stringify(raceResultArray));
   };
   
-  
-  const flattenRaceResultsData = (data) => {
-    const flattenedResults = data.map((item, raceRound) => ({
-      raceRound: raceRound + 1, // Assuming raceRound starts from 1
-      racePosition: item[0].position,
-      driverId: item[0].Driver.driverId,
-    }));
-  
-    console.log("flattenedRaceResults: ", flattenedResults);
-    return flattenedResults;
-  };
-  
-  
+    
   
   const combineDriverStandingsAndRaceResults = (standings, results) => {
-    // console.log("standings: ", standings);
-    // console.log("results: ", results);
-  
-    const flattenedResults = flattenRaceResultsData(results);
-  
-    const combinedData = standings.map((standing) => {
-      const driverId = standing.driverId;
-      const raceResult = flattenedResults.find((result) => result.driverId === driverId);
-      return {
-        ...standing,
-        ...raceResult,
+    // Create a map for easier lookup of driver standings
+    const standingsMap = standings.reduce((map, driver) => {
+      map[driver.id] = {
+        fullName: driver.fullName,
+        seasonEndPoints: parseFloat(driver.seasonEndPoints),
+        races: {},
       };
+      return map;
+    }, {});
+  
+    // Iterate through race results and update the standings map
+    results.forEach((race) => {
+      race.results.forEach((result) => {
+        const driverId = result.driverId;
+        
+        // Ensure that the races property is an object and not an array
+        standingsMap[driverId].races = standingsMap[driverId].races || {};
+  
+        // Update the races map with the circuitName and position
+        //console.log(result.position);
+        standingsMap[driverId].races[race.circuitName] = result.position;
+
+      });
     });
   
-    console.log("combinedData: ", combinedData);
+    // Convert the standings map to an array
+    const combinedData = Object.values(standingsMap);
+    //console.log("combinedData: " + JSON.stringify(combinedData));
     setRowsCombined(combinedData);
   };
+  
+  
+  
   
 
   // sets up the circuit columns
@@ -112,6 +116,7 @@ const Results = () => {
       { field: "seasonEndPoints", headerName: "Points", width: 130 },
     ];
     circuits.forEach((circuit) => {
+      console.log(circuit);
       newColumns.push({
         field: circuit.circuitName,
         headerName: circuit.circuitName,
@@ -131,7 +136,7 @@ const Results = () => {
 
   useEffect(() => {
     // Access rowsCombined here or perform any other actions after the state is updated
-    console.log("Rows Combined: ", rowsCombined);
+    //console.log("Rows Combined: ", rowsCombined);
   }, [rowsCombined]);
 
   return (
@@ -163,7 +168,7 @@ const Results = () => {
       <div className="data-grid-container">
       
         <DataGrid
-          getRowId={(row) => row.id}
+          getRowId={(row) => row.fullName}
           rows={rowsCombined}
           columns={circuitColumns}
           pageSize={10}

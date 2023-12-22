@@ -1,52 +1,19 @@
 const assert = require("assert");
-const convertToDriverObject1 = require("../test/testData/convertToRaceObjectData.js");
-const {
-  convertToDriverSeasonResultObject,
-} = require("../controllers/resultsController.jsx");
-const { DriverSeasonResult } = require("../app/objects/DriverSeasonResult.js");
-const { convertToRaceObject } = require("../controllers/resultsController.jsx");
-const {Race} = require("../app/objects/Race.js")
+const standings1 = require("../test/testData/standings1.json");
+const results1 = require("../test/testData/results1.json");
 
-describe("convertToDriveSeasonResultObject", () => {
-  it("should convert a valid result object to a driverSeasonResult object", () => {
-    const result = {
-      position: "1",
-      positionText: "1",
-      points: "395.5",
-      wins: "10",
-      Driver: {
-        driverId: "max_verstappen",
-        permanentNumber: "33",
-        code: "VER",
-        url: "http://en.wikipedia.org/wiki/Max_Verstappen",
-        givenName: "Max",
-        familyName: "Verstappen",
-        dateOfBirth: "1997-09-30",
-        nationality: "Dutch",
-      },
-      Constructors: [
-        {
-          constructorId: "red_bull",
-          url: "http://en.wikipedia.org/wiki/Red_Bull_Racing",
-          name: "Red Bull",
-          nationality: "Austrian",
-        },
-      ],
-    };
-    const expectedDriver = {
-      firstName: "Max",
-      surname: "Verstappen",
-      fullName: "Max Verstappen",
-      id: "max_verstappen",
-      team: "Red Bull",
-      driverNumber: "33",
-      nationality: "Dutch",
-      seasonEndDriverStanding: "1",
-      seasonEndPoints: "395.5",
-    };
 
-    const convertedDriver = convertToDriverSeasonResultObject(result);
-    assert.deepEqual(convertedDriver, expectedDriver);
+describe("combineDriverStandingsAndRaceResults", () => {
+  it("should combine driver standings and race results and return an object", () => {
+    const standings = standings1;
+    const results = results1;
+
+    const expected = {
+        
+    }
+
+    const combineDriverStandingsAndRaceResult = combineDriverStandingsAndRaceResults(standings, results); 
+    assert.deepEqual(combineDriverStandingsAndRaceResult, expected);
   });
 
   it("should be an instance of a DriverSeasonResult object", () => {

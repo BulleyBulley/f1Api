@@ -70,9 +70,9 @@ const fetchCircuitsWithinAYear = async (year) => {
 const fetchRaceResult = async (year, round) => {
   try {
     const result = await getRaceResult(year, round);
-    convertToRaceObject(result);
+    const converted = convertToRaceObject(result);
 
-    return result;
+    return converted;
   } catch (error) {
     console.log(error);
     return error;
@@ -80,14 +80,16 @@ const fetchRaceResult = async (year, round) => {
 }
 
 const convertToRaceObject = (result) => {
-  if (!result || !result.MRData || !result.MRData.RaceTable || !result.MRData.RaceTable.Races || !Array.isArray(result.MRData.RaceTable.Races)) {
+  //console.log("result: " + JSON.stringify(result));
+  if (result === undefined) {
     return "invalid result";
   }
 
   const race = new Race();
   const firstRace = result.MRData.RaceTable.Races[0];
+  //console.log("firstRace: " + JSON.stringify(firstRace));
 
-  race.results = Object.values(firstRace.Results).map((item) => ({
+  race.results = firstRace.Results.map((item) => ({
     position: parseInt(item.position, 10),
     driverId: item.Driver.driverId
   }));
@@ -100,9 +102,10 @@ const convertToRaceObject = (result) => {
   race.circuitName = firstRace.Circuit.circuitName;
   race.date = firstRace.date;
   race.time = firstRace.time;
-  console.log("race: " + race)
+
   return race;
 };
+
 
 
 
