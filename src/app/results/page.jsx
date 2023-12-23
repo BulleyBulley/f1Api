@@ -55,7 +55,10 @@ const Results = () => {
         numberOfRaces
       );
       // Call combineDriverStandingsAndRaceResults to generate dynamic columns
-      combineDriverStandingsAndRaceResults(driverStandings,raceResultsForSeason);
+      const combinedDriverStandingsAndRaceResults = combineDriverStandingsAndRaceResults(driverStandings,raceResultsForSeason);
+      handleUpdatedDriverStandingsAndRaceResults(combinedDriverStandingsAndRaceResults);
+
+
     } catch (error) {
       console.error(error);
     }
@@ -79,22 +82,22 @@ const Results = () => {
       map[driver.id] = {
         fullName: driver.fullName,
         seasonEndPoints: parseFloat(driver.seasonEndPoints),
-        races: {}, // Initialize races as an object
       };
       return map;
     }, {});
-
+  
     // Generate dynamic column definitions:
     const dynamicColumns = [
       { field: "fullName", headerName: "Driver", width: 130 },
       { field: "seasonEndPoints", headerName: "Points", width: 130 },
     ];
-
+  
+    // Generate columns for each circuit
     results.forEach((race) => {
       const existingColumn = dynamicColumns.find(
         (column) => column.field === race.circuitName
       );
-
+  
       if (!existingColumn) {
         // Add a new column only if it doesn't already exist
         dynamicColumns.push({
@@ -104,27 +107,36 @@ const Results = () => {
         });
       }
     });
-
+  
     // Iterate through race results and update the standings map
     results.forEach((race) => {
       race.results.forEach((result) => {
         const driverId = result.driverId;
-
-        // Ensure that the races property is an object and not an array
-        standingsMap[driverId].races = standingsMap[driverId].races || {};
-
+  
+        // Ensure that the driver exists in standingsMap
+        if (!standingsMap[driverId]) {
+          standingsMap[driverId] = {
+            fullName: result.driverName, // Assuming result.driverName is available
+            seasonEndPoints: 0,
+          };
+        }
+  
         // Update the races map with the circuitName and position
-        standingsMap[driverId].races[race.circuitName] = result.position;
+        standingsMap[driverId][race.circuitName] = result.position;
       });
     });
-
+  
     // Convert the standings map to an array
     const combinedData = Object.values(standingsMap);
-
-    // Set dynamicColumns and rowsCombined
-    setDynamicColumns(dynamicColumns);
-    setRowsCombined(combinedData);
+  
+    return { dynamicColumns, combinedData };
   };
+  
+
+  const handleUpdatedDriverStandingsAndRaceResults = (combinedDriverStandingsAndRaceResults) => {
+    setDynamicColumns(combinedDriverStandingsAndRaceResults.dynamicColumns);
+    setRowsCombined(combinedDriverStandingsAndRaceResults.combinedData);
+  }
 
   // fetches the seasons
   useEffect(() => {
@@ -135,8 +147,12 @@ const Results = () => {
 
   useEffect(() => {
     // Access rowsCombined here or perform any other actions after the state is updated
-    //console.log("Rows Combined: ", rowsCombined);
+    console.log("Rows Combined: ", rowsCombined);
   }, [rowsCombined]);
+
+  useEffect(() => {
+    console.log("Dynamic Columns: ", dynamicColumns);
+  }, [dynamicColumns]);
 
 
   return (
