@@ -55,7 +55,7 @@ async function getAllCircuits() {
 async function getSeasonEndDriverStandings(year) {
     try {
         const response = await axios.get(API_URL + year + '/driverStandings.json?limit=1000');
-        return response.data.MRData.StandingsTable.StandingsLists[0].DriverStandings;
+        return response.data.MRData.StandingsTable.StandingsLists[0];
     } catch (error) {
         console.log(error);
         return error;

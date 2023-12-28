@@ -2,7 +2,7 @@
 const { Driver} = require('../app/objects/Driver.js');
 const { getSeasons, getSeasonEndDriverStandings, getCircuitsWithinAYear, getRaceResult } = require( '../utilities/api.jsx');
 const { DriverSeasonResult } = require('../app/objects/DriverSeasonResult.js');
-const {Race} = require("../app/objects/Race.js")
+const { Race } = require("../app/objects/Race.js")
 
 // Define the fetchSeasons function
 const fetchSeasons = async () => {
@@ -26,11 +26,10 @@ const fetchSeasonEndDriverStandings = async (year) => {
   console.log("IN fetchSeasonEndDriverStandings");
   try {
     const standings = await getSeasonEndDriverStandings(year);
-    
-    // Convert each instance of a driver standing into a Driver object
-    const driverSeasonResultObjects = standings.map(convertToDriverSeasonResultObject);
+    const driverStandings = standings.DriverStandings.map(convertToDriverSeasonResultObject);
+    const numberOfRaces = standings.round;
     console.log("OUT fetchSeasonEndDriverStandings");
-    return driverSeasonResultObjects;
+    return  { driverStandings, numberOfRaces };
   } catch (error) {
     console.log(error);
     return error;

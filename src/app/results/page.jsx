@@ -42,19 +42,13 @@ const Results = () => {
     ]);
 
     try {
-      const driverStandings = await fetchSeasonEndDriverStandings(year);
-      const circuits = await fetchCircuitsWithinAYear(year);
-
-      const numberOfRaces = circuits.length;
-
-      const raceResultsForSeason = await getRaceResultsForSeason(
-        year,
-        numberOfRaces
-      );
+      const { driverStandings, numberOfRaces } = await fetchSeasonEndDriverStandings(year);
+      console.log("driverStandings", driverStandings);
+      console.log("numberOfRaces", numberOfRaces);
+      const raceResultsForSeason = await getRaceResultsForSeason(year,numberOfRaces);
       //generate dynamic columns
       const combinedDriverStandingsAndRaceResults =
-        combineDriverStandingsAndRaceResults(
-          driverStandings,
+        combineDriverStandingsAndRaceResults(driverStandings,
           raceResultsForSeason
         );
       handleUpdatedDriverStandingsAndRaceResults(
