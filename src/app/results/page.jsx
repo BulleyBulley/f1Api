@@ -1,11 +1,7 @@
 "use client"; // Use the client-side API
 import React from "react";
 import { useState, useEffect } from "react";
-import {
-  fetchSeasons,
-  fetchSeasonEndDriverStandings,
-  fetchCircuitsWithinAYear,
-  fetchRaceResult,
+import {fetchSeasons, fetchSeasonEndDriverStandings, fetchCircuitsWithinAYear, fetchRaceResult,
 } from "../../controllers/resultsController";
 import Box from "@mui/material/Box";
 import InputLabel from "@mui/material/InputLabel";
@@ -28,9 +24,11 @@ const Results = () => {
     { field: "fullName", headerName: "Driver", width: 130 },
     { field: "seasonEndPoints", headerName: "Points", width: 130 },
   ]);
+  
 
   // gets driver standings, then gets circuits for the season and sets selected season
   const handleSelectedSeason = async (event) => {
+    console.log("IN handleSelectedSeason");
     const year = event.target.value;
     setSeasonEndDriverStandings([]);
     setCircuitsWithinASeason([]);
@@ -54,26 +52,38 @@ const Results = () => {
         numberOfRaces
       );
       //generate dynamic columns
-      const combinedDriverStandingsAndRaceResults = combineDriverStandingsAndRaceResults(driverStandings,raceResultsForSeason);
-      handleUpdatedDriverStandingsAndRaceResults(combinedDriverStandingsAndRaceResults);
-
-
+      const combinedDriverStandingsAndRaceResults =
+        combineDriverStandingsAndRaceResults(
+          driverStandings,
+          raceResultsForSeason
+        );
+      handleUpdatedDriverStandingsAndRaceResults(
+        combinedDriverStandingsAndRaceResults
+      );
+      console.log("OUT handleSelectedSeason");
     } catch (error) {
       console.error(error);
     }
   };
 
+
   const getRaceResultsForSeason = async (year, numberOfRaces) => {
-    const raceResultArray = [];
-    for (let i = 0; i < numberOfRaces; i++) {
-      const round = i + 1;
-      const raceResult = await fetchRaceResult(year, round);
-      raceResultArray.push(raceResult);
+    console.log("IN getRaceResultsForSeason");
+    try {
+      const promises = Array.from({ length: numberOfRaces }, (_, i) =>
+        fetchRaceResult(year, i + 1)
+      );
+      const raceResultsArray = await Promise.all(promises);
+      console.log("OUT getRaceResultsForSeason");
+      return raceResultsArray;
+    } catch (error) {
+      console.log(error);
+      return error;
     }
-    return raceResultArray;
   };
 
   const combineDriverStandingsAndRaceResults = (standings, results) => {
+    console.log("IN combineDriverStandingsAndRaceResults");
     // Create a map for easier lookup of driver standings
     const standingsMap = standings.reduce((map, driver) => {
       map[driver.id] = {
@@ -82,19 +92,19 @@ const Results = () => {
       };
       return map;
     }, {});
-  
+
     // Generate dynamic column definitions:
     const dynamicColumns = [
       { field: "fullName", headerName: "Driver", width: 130 },
       { field: "seasonEndPoints", headerName: "Points", width: 130 },
     ];
-  
+
     // Generate columns for each circuit
     results.forEach((race) => {
       const existingColumn = dynamicColumns.find(
         (column) => column.field === race.friendlyName
       );
-  
+
       if (!existingColumn) {
         // Add a new column only if it doesn't already exist
         dynamicColumns.push({
@@ -104,12 +114,12 @@ const Results = () => {
         });
       }
     });
-  
+
     // Iterate through race results and update the standings map
     results.forEach((race) => {
       race.results.forEach((result) => {
         const driverId = result.driverId;
-  
+
         // Ensure that the driver exists in standingsMap
         if (!standingsMap[driverId]) {
           standingsMap[driverId] = {
@@ -121,17 +131,17 @@ const Results = () => {
         standingsMap[driverId][race.friendlyName] = result.position;
       });
     });
-  
+
     // Convert the standings map to an array
     const combinedData = Object.values(standingsMap);
-  
+    console.log("OUT combineDriverStandingsAndRaceResults");
     return { dynamicColumns, combinedData };
   };
-  
+
   const handleUpdatedDriverStandingsAndRaceResults = (combinedDriverStandingsAndRaceResults) => {
     setDynamicColumns(combinedDriverStandingsAndRaceResults.dynamicColumns);
     setRowsCombined(combinedDriverStandingsAndRaceResults.combinedData);
-  }
+  };
 
   // fetches the seasons
   useEffect(() => {
@@ -147,7 +157,6 @@ const Results = () => {
   useEffect(() => {
     // Access dynamicColumns here or perform any other actions after the state is updated
   }, [dynamicColumns]);
-
 
   return (
     <div className="main-container">
@@ -176,7 +185,6 @@ const Results = () => {
       </FormControl>
 
       <div className="data-grid-container">
-
         <DataGrid
           getRowId={(row) => row.fullName}
           getColumnId={(column) => column.field}

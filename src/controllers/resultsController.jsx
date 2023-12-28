@@ -6,13 +6,14 @@ const {Race} = require("../app/objects/Race.js")
 
 // Define the fetchSeasons function
 const fetchSeasons = async () => {
+  console.log("IN fetchSeasons");
   try {
     // Call the getSeasons function to fetch the data from the API
     const seasons = await getSeasons();
 
     // Convert the seasons object to an array
     const seasonsArray = Object.values(seasons);
-
+    console.log("OUT fetchSeasons");
     // Return the seasonsArray as props to the results page
     return seasonsArray;
   } catch (error) {
@@ -22,12 +23,13 @@ const fetchSeasons = async () => {
 };
 
 const fetchSeasonEndDriverStandings = async (year) => {
+  console.log("IN fetchSeasonEndDriverStandings");
   try {
     const standings = await getSeasonEndDriverStandings(year);
     
     // Convert each instance of a driver standing into a Driver object
     const driverSeasonResultObjects = standings.map(convertToDriverSeasonResultObject);
-    
+    console.log("OUT fetchSeasonEndDriverStandings");
     return driverSeasonResultObjects;
   } catch (error) {
     console.log(error);
@@ -36,7 +38,7 @@ const fetchSeasonEndDriverStandings = async (year) => {
 }
 
 const convertToDriverSeasonResultObject = (driverStanding) => {
-
+  console.log("IN convertToDriverSeasonResultObject");
   //return not valid if driverStanding is not valid
   if (!driverStanding) {
     return "invalid driverStanding";
@@ -53,13 +55,16 @@ const convertToDriverSeasonResultObject = (driverStanding) => {
   driverSeasonResult.seasonEndDriverStanding = driverStanding.position;
   driverSeasonResult.seasonEndPoints = driverStanding.points;
 
+  console.log("OUT convertToDriverSeasonResultObject")
   return driverSeasonResult;
   
 }
 
 const fetchCircuitsWithinAYear = async (year) => {
+  console.log("IN fetchCircuitsWithinAYear")
   try {
     const circuits = await getCircuitsWithinAYear(year);
+    console.log("OUT fetchCircuitsWithinAYear")
     return circuits;
   } catch (error) {
     console.log(error);
@@ -68,10 +73,11 @@ const fetchCircuitsWithinAYear = async (year) => {
 }
 
 const fetchRaceResult = async (year, round) => {
+  console.log("IN fetchRaceResult")
   try {
     const result = await getRaceResult(year, round);
     const converted = convertToRaceObject(result);
-
+    console.log("OUT fetchRaceResult")
     return converted;
   } catch (error) {
     console.log(error);
@@ -80,6 +86,7 @@ const fetchRaceResult = async (year, round) => {
 }
 
 const convertToRaceObject = (result) => {
+  console.log("IN convertToRaceObject");
   //console.log("result: " + JSON.stringify(result));
   if (result === undefined) {
     return "invalid result";
@@ -103,7 +110,7 @@ const convertToRaceObject = (result) => {
   race.date = firstRace.date;
   race.time = firstRace.time;
   race.friendlyName = Race.getFriendlyName(firstRace.Circuit.circuitName);
-
+  console.log("OUT convertToRaceObject");
   return race;
 };
 
