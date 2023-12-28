@@ -22,7 +22,6 @@ const Results = () => {
   const [seasonEndDriverStandings, setSeasonEndDriverStandings] = useState([]);
   const [circuitsWithinASeason, setCircuitsWithinASeason] = useState([]);
   const columns = [];
-  const [circuitColumns, setCircuitColumns] = useState([]);
   const [raceResults, setRaceResults] = useState([]);
   const [rowsCombined, setRowsCombined] = useState([]);
   const [dynamicColumns, setDynamicColumns] = useState([
@@ -54,7 +53,7 @@ const Results = () => {
         year,
         numberOfRaces
       );
-      // Call combineDriverStandingsAndRaceResults to generate dynamic columns
+      //generate dynamic columns
       const combinedDriverStandingsAndRaceResults = combineDriverStandingsAndRaceResults(driverStandings,raceResultsForSeason);
       handleUpdatedDriverStandingsAndRaceResults(combinedDriverStandingsAndRaceResults);
 
@@ -69,11 +68,9 @@ const Results = () => {
     for (let i = 0; i < numberOfRaces; i++) {
       const round = i + 1;
       const raceResult = await fetchRaceResult(year, round);
-      //console.log("raceResult: " + JSON.stringify(raceResult));
       raceResultArray.push(raceResult);
     }
     return raceResultArray;
-    // console.log("raceResultArray: " + JSON.stringify(raceResultArray));
   };
 
   const combineDriverStandingsAndRaceResults = (standings, results) => {
@@ -95,14 +92,14 @@ const Results = () => {
     // Generate columns for each circuit
     results.forEach((race) => {
       const existingColumn = dynamicColumns.find(
-        (column) => column.field === race.circuitName
+        (column) => column.field === race.friendlyName
       );
   
       if (!existingColumn) {
         // Add a new column only if it doesn't already exist
         dynamicColumns.push({
-          field: race.circuitName,
-          headerName: race.circuitName,
+          field: race.friendlyName,
+          headerName: race.friendlyName,
           width: 150,
         });
       }
@@ -120,9 +117,8 @@ const Results = () => {
             seasonEndPoints: 0,
           };
         }
-  
         // Update the races map with the circuitName and position
-        standingsMap[driverId][race.circuitName] = result.position;
+        standingsMap[driverId][race.friendlyName] = result.position;
       });
     });
   
@@ -132,7 +128,6 @@ const Results = () => {
     return { dynamicColumns, combinedData };
   };
   
-
   const handleUpdatedDriverStandingsAndRaceResults = (combinedDriverStandingsAndRaceResults) => {
     setDynamicColumns(combinedDriverStandingsAndRaceResults.dynamicColumns);
     setRowsCombined(combinedDriverStandingsAndRaceResults.combinedData);
@@ -147,11 +142,10 @@ const Results = () => {
 
   useEffect(() => {
     // Access rowsCombined here or perform any other actions after the state is updated
-    console.log("Rows Combined: ", rowsCombined);
   }, [rowsCombined]);
 
   useEffect(() => {
-    console.log("Dynamic Columns: ", dynamicColumns);
+    // Access dynamicColumns here or perform any other actions after the state is updated
   }, [dynamicColumns]);
 
 
@@ -182,8 +176,6 @@ const Results = () => {
       </FormControl>
 
       <div className="data-grid-container">
-        {/* {console.log("rowsCombined: " + JSON.stringify(rowsCombined))}
-        {console.log("dynamicColumns: " + JSON.stringify(dynamicColumns))} */}
 
         <DataGrid
           getRowId={(row) => row.fullName}

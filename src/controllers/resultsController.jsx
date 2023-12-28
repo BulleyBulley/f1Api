@@ -102,6 +102,7 @@ const convertToRaceObject = (result) => {
   race.circuitName = firstRace.Circuit.circuitName;
   race.date = firstRace.date;
   race.time = firstRace.time;
+  race.friendlyName = Race.getFriendlyName(firstRace.Circuit.circuitName);
 
   return race;
 };
