@@ -1,7 +1,12 @@
 "use client"; // Use the client-side API
 import React from "react";
 import { useState, useEffect } from "react";
-import {fetchSeasons, fetchSeasonEndDriverStandings, fetchCircuitsWithinAYear, fetchRaceResult,
+import {
+  fetchSeasons,
+  fetchSeasonEndDriverStandings,
+  fetchCircuitsWithinAYear,
+  fetchRaceResult,
+  fetchFlagUrls,
 } from "../../controllers/resultsController";
 import Box from "@mui/material/Box";
 import InputLabel from "@mui/material/InputLabel";
@@ -24,7 +29,6 @@ const Results = () => {
     { field: "fullName", headerName: "Driver", width: 130 },
     { field: "seasonEndPoints", headerName: "Points", width: 130 },
   ]);
-  
 
   // gets driver standings, then gets circuits for the season and sets selected season
   const handleSelectedSeason = async (event) => {
@@ -42,14 +46,20 @@ const Results = () => {
     ]);
 
     try {
-      const { driverStandings, numberOfRaces } = await fetchSeasonEndDriverStandings(year);
-      console.log("driverStandings", driverStandings);
-      console.log("numberOfRaces", numberOfRaces);
-      const raceResultsForSeason = await getRaceResultsForSeason(year,numberOfRaces);
+      const { driverStandings, numberOfRaces } =
+        await fetchSeasonEndDriverStandings(year);
+      const raceResultsForSeason = await getRaceResultsForSeason(
+        year,
+        numberOfRaces
+      );
+
+      const resultsWithFlags = await fetchFlagUrls(raceResultsForSeason);
+      //console.log("resultsWithFlags: " + JSON.stringify(resultsWithFlags));
       //generate dynamic columns
       const combinedDriverStandingsAndRaceResults =
-        combineDriverStandingsAndRaceResults(driverStandings,
-          raceResultsForSeason
+        combineDriverStandingsAndRaceResults(
+          driverStandings,
+          resultsWithFlags
         );
       handleUpdatedDriverStandingsAndRaceResults(
         combinedDriverStandingsAndRaceResults
@@ -59,7 +69,6 @@ const Results = () => {
       console.error(error);
     }
   };
-
 
   const getRaceResultsForSeason = async (year, numberOfRaces) => {
     console.log("IN getRaceResultsForSeason");
@@ -89,25 +98,56 @@ const Results = () => {
 
     // Generate dynamic column definitions:
     const dynamicColumns = [
-      { field: "fullName", headerName: "Driver", width: 130 },
-      { field: "seasonEndPoints", headerName: "Points", width: 130 },
+      { field: "fullName", headerName: "Driver", width: 180 },
+      { field: "seasonEndPoints", headerName: "Points", width: 100 },
     ];
 
     // Generate columns for each circuit
     results.forEach((race) => {
+      console.log(race.country)
       const existingColumn = dynamicColumns.find(
         (column) => column.field === race.friendlyName
       );
-
       if (!existingColumn) {
-        // Add a new column only if it doesn't already exist
+        const flagUrl = race.flagUrl;
+        // Format the date to be displayed in the column header
+        const formattedDate = new Date(race.date).toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'short',
+        });
+
         dynamicColumns.push({
           field: race.friendlyName,
           headerName: race.friendlyName,
-          width: 150,
+          width: 120,
+          renderHeader: (params) => (
+            //set div background image to flagUrl
+            <div
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              lineHeight: '1em',
+              backgroundColor: '#f5f5f5',
+              padding: '25%, 25%, 25%, 25%',
+              borderRadius: '10px',
+              margin: '5px, 5px, 5px, 5px',
+              align: 'center'
+            }}
+          >
+            
+            <h3>{race.friendlyName}</h3>
+            <img src={flagUrl} width="30%"/>
+            <h4>{formattedDate}</h4>
+          </div>  
+          )
         });
       }
     });
+    
 
     // Iterate through race results and update the standings map
     results.forEach((race) => {
@@ -122,17 +162,19 @@ const Results = () => {
           };
         }
         // Update the races map with the circuitName and position
+
         standingsMap[driverId][race.friendlyName] = result.position;
       });
     });
 
     // Convert the standings map to an array
     const combinedData = Object.values(standingsMap);
-    console.log("OUT combineDriverStandingsAndRaceResults");
     return { dynamicColumns, combinedData };
   };
 
-  const handleUpdatedDriverStandingsAndRaceResults = (combinedDriverStandingsAndRaceResults) => {
+  const handleUpdatedDriverStandingsAndRaceResults = (
+    combinedDriverStandingsAndRaceResults
+  ) => {
     setDynamicColumns(combinedDriverStandingsAndRaceResults.dynamicColumns);
     setRowsCombined(combinedDriverStandingsAndRaceResults.combinedData);
   };
@@ -180,7 +222,7 @@ const Results = () => {
 
       <div className="data-grid-container">
         <DataGrid
-          getRowId={(row) => row.fullName}
+          getRowId={(row) => `${row.fullName}:${row.seasonEndPoints}`}
           getColumnId={(column) => column.field}
           rows={rowsCombined}
           columns={dynamicColumns}

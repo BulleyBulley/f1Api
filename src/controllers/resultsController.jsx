@@ -113,6 +113,62 @@ const convertToRaceObject = (result) => {
   return race;
 };
 
+const fetchFlagUrls = async (races) => {
+
+  races.forEach(race => {
+    const countryCode = getCountryCode(race.country);
+    const style = "flat";
+    const size = "64";
+    race.flagUrl = `https://flagsapi.com/${countryCode}/${style}/${size}`;
+  });
+
+    return races;
+
+}
+
+function getCountryCode(country) {
+  switch (country) {
+    case "UAE": return "AE";
+    case "Argentina": return "AR";
+    case "Australia": return "AU";
+    case "Austria": return "AT";
+    case "Azerbaijan": return "AZ";
+    case "Bahrain": return "BH";
+    case "Belgium": return "BE";
+    case "Brazil": return "BR";
+    case "Canada": return "CA";
+    case "China": return "CN";
+    case "France": return "FR";
+    case "Germany": return "DE";
+    case "Hungary": return "HU";
+    case "Italy": return "IT";
+    case "Japan": return "JP";
+    case "Malaysia": return "MY";
+    case "Mexico": return "MX";
+    case "Monaco": return "MC";
+    case "Netherlands": return "NL";
+    case "Portugal": return "PT";
+    case "Qatar": return "QA";
+    case "Russia": return "RU";
+    case "Saudi Arabia": return "SA";
+    case "Singapore": return "SG";
+    case "South Africa": return "ZA";
+    case "Spain": return "ES";
+    case "Sweden": return "SE";
+    case "Switzerland": return "CH";
+    case "Turkey": return "TR";
+    case "United Arab Emirates": return "AE";
+    case "UK":
+    case "United Kingdom": 
+    return "GB";
+    case "United States":
+    case "USA":
+    return "US";
+    default: 
+      return "Unknown";
+  }
+}
+
 
 
 
@@ -124,5 +180,7 @@ module.exports = {
   fetchCircuitsWithinAYear,
   fetchRaceResult,
   convertToDriverSeasonResultObject,
-  convertToRaceObject
+  convertToRaceObject,
+  fetchFlagUrls,
+  getCountryCode
 };
