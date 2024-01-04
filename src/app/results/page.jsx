@@ -16,6 +16,7 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 import { DataGrid } from "@mui/x-data-grid";
 import { DriverSeasonResult } from "../objects/DriverSeasonResult.js";
 import { DriverSeasonRaceResults } from "../objects/DriverSeasonRaceResults.js";
+import styles from "../globals.css";
 
 const Results = () => {
   const [seasons, setSeasons] = useState([]);
@@ -25,25 +26,19 @@ const Results = () => {
   const columns = [];
   const [raceResults, setRaceResults] = useState([]);
   const [rowsCombined, setRowsCombined] = useState([]);
-  const [dynamicColumns, setDynamicColumns] = useState([
-    { field: "fullName", headerName: "Driver", width: 130 },
-    { field: "seasonEndPoints", headerName: "Points", width: 130 },
-  ]);
+  const [dynamicColumns, setDynamicColumns] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [seasonWinner, setSeasonWinner] = useState("");
+  const [winningDriverImage, setWinningDriverImage] = useState("");
 
   // gets driver standings, then gets circuits for the season and sets selected season
   const handleSelectedSeason = async (event) => {
     console.log("IN handleSelectedSeason");
+
+    initializePage();
+
     const year = event.target.value;
-    setSeasonEndDriverStandings([]);
-    setCircuitsWithinASeason([]);
     setSelectedSeason(event.target.value);
-    setRaceResults([]);
-    setRowsCombined([]);
-    setDynamicColumns([
-      // Reset dynamicColumns to base columns
-      { field: "fullName", headerName: "Driver", width: 130 },
-      { field: "seasonEndPoints", headerName: "Points", width: 130 },
-    ]);
 
     try {
       const { driverStandings, numberOfRaces } =
@@ -54,13 +49,14 @@ const Results = () => {
       );
 
       const resultsWithFlags = await fetchFlagUrls(raceResultsForSeason);
-      //console.log("resultsWithFlags: " + JSON.stringify(resultsWithFlags));
+
       //generate dynamic columns
       const combinedDriverStandingsAndRaceResults =
-        combineDriverStandingsAndRaceResults(
-          driverStandings,
-          resultsWithFlags
-        );
+        combineDriverStandingsAndRaceResults(driverStandings, resultsWithFlags);
+
+      //update season winner
+      updateSeasonWinner(driverStandings);
+
       handleUpdatedDriverStandingsAndRaceResults(
         combinedDriverStandingsAndRaceResults
       );
@@ -68,6 +64,17 @@ const Results = () => {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const initializePage = () => {
+    console.log("IN initializePage");
+    setSeasonEndDriverStandings([]);
+    setCircuitsWithinASeason([]);
+    setRaceResults([]);
+    setSeasonWinner("");
+    setRowsCombined([]);
+    setDynamicColumns([]);
+    console.log("OUT initializePage");
   };
 
   const getRaceResultsForSeason = async (year, numberOfRaces) => {
@@ -91,6 +98,7 @@ const Results = () => {
     const standingsMap = standings.reduce((map, driver) => {
       map[driver.id] = {
         fullName: driver.fullName,
+        constructor: driver.team,
         seasonEndPoints: parseFloat(driver.seasonEndPoints),
       };
       return map;
@@ -99,21 +107,22 @@ const Results = () => {
     // Generate dynamic column definitions:
     const dynamicColumns = [
       { field: "fullName", headerName: "Driver", width: 180 },
+      { field: "constructor", headerName: "Team", width: 120 },
       { field: "seasonEndPoints", headerName: "Points", width: 100 },
     ];
 
     // Generate columns for each circuit
     results.forEach((race) => {
-      console.log(race.country)
+      console.log(race.country);
       const existingColumn = dynamicColumns.find(
         (column) => column.field === race.friendlyName
       );
       if (!existingColumn) {
         const flagUrl = race.flagUrl;
         // Format the date to be displayed in the column header
-        const formattedDate = new Date(race.date).toLocaleDateString('en-GB', {
-          day: 'numeric',
-          month: 'short',
+        const formattedDate = new Date(race.date).toLocaleDateString("en-GB", {
+          day: "numeric",
+          month: "short",
         });
 
         dynamicColumns.push({
@@ -123,31 +132,30 @@ const Results = () => {
           renderHeader: (params) => (
             //set div background image to flagUrl
             <div
-            style={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              lineHeight: '1em',
-              backgroundColor: '#f5f5f5',
-              padding: '25%, 25%, 25%, 25%',
-              borderRadius: '10px',
-              margin: '5px, 5px, 5px, 5px',
-              align: 'center'
-            }}
-          >
-            
-            <h3>{race.friendlyName}</h3>
-            <img src={flagUrl} width="30%"/>
-            <h4>{formattedDate}</h4>
-          </div>  
-          )
+              className="race-name-header"
+              style={{
+                width: "100%",
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                lineHeight: "1em",
+                backgroundColor: "#f5f5f5",
+                padding: "25%, 25%, 25%, 25%",
+                borderRadius: "10px",
+                margin: "5px, 5px, 5px, 5px",
+                align: "center",
+              }}
+            >
+              <h3>{race.friendlyName}</h3>
+              <img src={flagUrl} width="30%" />
+              <h4>{formattedDate}</h4>
+            </div>
+          ),
         });
       }
     });
-    
 
     // Iterate through race results and update the standings map
     results.forEach((race) => {
@@ -179,6 +187,15 @@ const Results = () => {
     setRowsCombined(combinedDriverStandingsAndRaceResults.combinedData);
   };
 
+  const updateSeasonWinner = (driverStandings) => {
+    console.log("IN updateSeasonWinner");
+    const seasonWinner = driverStandings[0].fullName;
+    console.log(driverStandings[0]);
+    //const winningDriverImage = driverStandings[0].driverImage;
+    setSeasonWinner(seasonWinner);
+    console.log("OUT updateSeasonWinner");
+  };
+
   // fetches the seasons
   useEffect(() => {
     fetchSeasons()
@@ -196,29 +213,47 @@ const Results = () => {
 
   return (
     <div className="main-container">
-      <h1>Results Page</h1>
-      <p>Welcome to the Results Page!</p>
-      <h2>{selectedSeason}</h2>
+      <div className="title-container">
+        <div className="title-divider-left">
+          <div className="title-text-container">
+            <h1>Driver Results By Season</h1>
+          </div>
 
-      <FormControl>
-        <InputLabel id="demo-simple-select-label">Season</InputLabel>
-        <Select
-          labelId="demo-simple-select-label"
-          id="demo-simple-select"
-          value={selectedSeason}
-          label="Season"
-          onChange={handleSelectedSeason}
-        >
-          {seasons
-            .slice()
-            .reverse()
-            .map((season) => (
-              <MenuItem key={season.season} value={season.season}>
-                {season.season}
-              </MenuItem>
-            ))}
-        </Select>
-      </FormControl>
+          <div className="season-container">
+            <FormControl
+              className="select-season"
+              variant="outlined"
+              focused="true"
+              
+            >
+              <InputLabel id="demo-simple-select-label">Season</InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                value={selectedSeason}
+                label="Season"
+                onChange={handleSelectedSeason}
+              >
+                {seasons
+                  .slice()
+                  .reverse()
+                  .map((season) => (
+                    <MenuItem key={season.season} value={season.season}>
+                      {season.season}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+          </div>
+        </div>
+
+        <div className="title-divider-right">
+          <div className="winner-container">
+            <h2>Winner: {seasonWinner}</h2>
+            <image src={winningDriverImage} />
+          </div>
+        </div>
+      </div>
 
       <div className="data-grid-container">
         <DataGrid
@@ -226,11 +261,9 @@ const Results = () => {
           getColumnId={(column) => column.field}
           rows={rowsCombined}
           columns={dynamicColumns}
-          pageSize={10}
-          rowsPerPageOptions={[10]}
-          autoHeight
-          disableSelectionOnClick
-          // Add logs directly here
+          pageSize={20}
+          rowHeight={50}
+          columnHeaderHeight={80}
         />
       </div>
     </div>
