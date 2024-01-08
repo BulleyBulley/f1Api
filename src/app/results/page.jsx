@@ -34,13 +34,13 @@ const Results = () => {
   // gets driver standings, then gets circuits for the season and sets selected season
   const handleSelectedSeason = async (event) => {
     console.log("IN handleSelectedSeason");
-
-    initializePage();
-
-    const year = event.target.value;
-    setSelectedSeason(event.target.value);
-
     try {
+      initializePage();
+
+      const year = event.target.value;
+      setSelectedSeason(event.target.value);
+
+      // get driver standings
       const { driverStandings, numberOfRaces } =
         await fetchSeasonEndDriverStandings(year);
       const raceResultsForSeason = await getRaceResultsForSeason(
@@ -48,15 +48,17 @@ const Results = () => {
         numberOfRaces
       );
 
+      // add flags to the results
       const resultsWithFlags = await fetchFlagUrls(raceResultsForSeason);
 
       //generate dynamic columns
       const combinedDriverStandingsAndRaceResults =
         combineDriverStandingsAndRaceResults(driverStandings, resultsWithFlags);
 
-      //update season winner
+      //update season winner from diver standings
       updateSeasonWinner(driverStandings);
 
+      //put all the results together
       handleUpdatedDriverStandingsAndRaceResults(
         combinedDriverStandingsAndRaceResults
       );
@@ -66,6 +68,7 @@ const Results = () => {
     }
   };
 
+  // resets the page state
   const initializePage = () => {
     console.log("IN initializePage");
     setSeasonEndDriverStandings([]);
@@ -77,6 +80,7 @@ const Results = () => {
     console.log("OUT initializePage");
   };
 
+  //makes an array of race results for the season
   const getRaceResultsForSeason = async (year, numberOfRaces) => {
     console.log("IN getRaceResultsForSeason");
     try {
@@ -108,7 +112,11 @@ const Results = () => {
     const dynamicColumns = [
       { field: "fullName", headerName: "Driver", width: 180 },
       { field: "constructor", headerName: "Team", width: 120 },
-      { field: "seasonEndPoints", headerName: "Points", width: 100 },
+      { field: "seasonEndPoints", headerName: "Points", width: 100, renderCell: (params) => {
+        return (
+          pointsCellFormatter(params)
+        )
+      } },
     ];
 
     // Generate columns for each circuit
@@ -128,35 +136,25 @@ const Results = () => {
         dynamicColumns.push({
           field: race.friendlyName,
           headerName: race.friendlyName,
-          width: 120,
+          width: 100,
+          disableColumnFilter: true,
+          disableColumnSort: true,
           renderHeader: (params) => (
             //set div background image to flagUrl
             <div
               className="race-name-header"
-              style={{
-                width: "100%",
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                lineHeight: "1em",
-                backgroundColor: "#f5f5f5",
-                padding: "25%, 25%, 25%, 25%",
-                borderRadius: "10px",
-                margin: "5px, 5px, 5px, 5px",
-                align: "center",
-              }}
             >
               <h3>{race.friendlyName}</h3>
-              <img src={flagUrl} width="30%" />
+              <img src={flagUrl}/>
               <h4>{formattedDate}</h4>
             </div>
           ),
+          renderCell: (params) => {
+            return raceCellFormatter(params);
+          }
         });
       }
     });
-
     // Iterate through race results and update the standings map
     results.forEach((race) => {
       race.results.forEach((result) => {
@@ -165,12 +163,11 @@ const Results = () => {
         // Ensure that the driver exists in standingsMap
         if (!standingsMap[driverId]) {
           standingsMap[driverId] = {
-            fullName: result.driverName, // Assuming result.driverName is available
+            fullName: result.driverName,
             seasonEndPoints: 0,
           };
         }
         // Update the races map with the circuitName and position
-
         standingsMap[driverId][race.friendlyName] = result.position;
       });
     });
@@ -180,6 +177,7 @@ const Results = () => {
     return { dynamicColumns, combinedData };
   };
 
+  //populate the DataGrid
   const handleUpdatedDriverStandingsAndRaceResults = (
     combinedDriverStandingsAndRaceResults
   ) => {
@@ -187,14 +185,31 @@ const Results = () => {
     setRowsCombined(combinedDriverStandingsAndRaceResults.combinedData);
   };
 
+  //updates the season winner text
   const updateSeasonWinner = (driverStandings) => {
     console.log("IN updateSeasonWinner");
     const seasonWinner = driverStandings[0].fullName;
-    console.log(driverStandings[0]);
-    //const winningDriverImage = driverStandings[0].driverImage;
     setSeasonWinner(seasonWinner);
     console.log("OUT updateSeasonWinner");
   };
+
+  const raceCellFormatter = (params) => {
+    return (
+      <span className="race-cell-value">{params.value}</span>
+    )
+  }
+  
+  const pointsCellFormatter = (params) => {
+    return (
+      <span className="points-cell-value">{params.value}</span>
+    )
+  }
+
+  const flagCellFormatter = (params) => {
+    return (
+      <div className="race-name-header"></div>
+    )
+  }
 
   // fetches the seasons
   useEffect(() => {
@@ -204,11 +219,11 @@ const Results = () => {
   }, []);
 
   useEffect(() => {
-    // Access rowsCombined here or perform any other actions after the state is updated
+    // update page when rowsCombined is updated
   }, [rowsCombined]);
 
   useEffect(() => {
-    // Access dynamicColumns here or perform any other actions after the state is updated
+    // update page when dynamicColumns is updated
   }, [dynamicColumns]);
 
   return (
@@ -250,7 +265,7 @@ const Results = () => {
         <div className="title-divider-right">
           <div className="winner-container">
             <h2>Winner: {seasonWinner}</h2>
-            <image src={winningDriverImage} />
+            <img src={winningDriverImage} />
           </div>
         </div>
       </div>
@@ -264,6 +279,9 @@ const Results = () => {
           pageSize={20}
           rowHeight={50}
           columnHeaderHeight={80}
+          disableColumnMenu={true}
+          disableColumnFilter={true}
+          disableColumnSort={true}
         />
       </div>
     </div>
