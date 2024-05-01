@@ -28,6 +28,8 @@ class Race {
             case "Autodromo Nazionale di Monza": return "Monza";
             case "Bahrain International Circuit": return "Bahrain";
             case "Baku City Circuit": return "Baku";
+            case "Brands Hatch": return "Brands Hatch";
+            case "Buddh International Circuit": return "Buddh";
             case "Charade Circuit": return "Charade";
             case "Circuit Bremgarten": return "Bremgarten";
             case "Circuit de Barcelona-Catalunya": return "Barcelona";
@@ -37,7 +39,6 @@ class Race {
             case "Dijon-Prenois": return "Dijon";
             case "Donington Park": return "Donington";
             case "Circuit de Dijon-Prenois": return "Dijon";
-
             case "Circuit de Pedralbes": return "Pedralbes";
             case "Circuit de Pau-Ville": return "Pau-Ville";
             case "Circuit Gilles Villeneuve": return "Montreal";
@@ -52,6 +53,8 @@ class Race {
             case "Indianapolis Motor Speedway": return "Indianapolis";
             case "Istanbul Park": return "Istanbul";
             case "Jeddah Corniche Circuit": return "Jeddah";
+            case "Korean International Circuit": return "Korea";
+            case "Kyalami Grand Prix Circuit": return "Kyalami";
             case "Las Vegas Street Circuit": return "Las Vegas";
             case "Las Vegas Strip Street Circuit": return "Las Vegas";
             case "Losail International Circuit": return "Qatar";
@@ -75,6 +78,7 @@ class Race {
             case "Silverstone Circuit": return "Silverstone";
             case "Sochi Autodrom": return "Sochi";
             case "Suzuka Circuit": return "Suzuka";
+            case "Valencia Street Circuit": return "Valencia";
             case "Yas Marina Circuit": return "Abu Dhabi";
             
                 default: return circuitName;

@@ -141,12 +141,15 @@ const Results = () => {
           disableColumnSort: true,
           renderHeader: (params) => (
             //set div background image to flagUrl
-            <div
-              className="race-name-header"
-            >
+            <div className="race-name-header-container">
+              <div className="race-name-header-text">
               <h3>{race.friendlyName}</h3>
-              <img src={flagUrl}/>
               <h4>{formattedDate}</h4>
+              </div>
+              <div className="race-flag-image">
+              <img src={flagUrl} />
+
+              </div>
             </div>
           ),
           renderCell: (params) => {
@@ -205,11 +208,6 @@ const Results = () => {
     )
   }
 
-  const flagCellFormatter = (params) => {
-    return (
-      <div className="race-name-header"></div>
-    )
-  }
 
   // fetches the seasons
   useEffect(() => {
@@ -263,6 +261,7 @@ const Results = () => {
         </div>
 
         <div className="title-divider-right">
+        
           <div className="winner-container">
             <h2>Winner: {seasonWinner}</h2>
             <img src={winningDriverImage} />
@@ -282,6 +281,16 @@ const Results = () => {
           disableColumnMenu={true}
           disableColumnFilter={true}
           disableColumnSort={true}
+          rowsPerPageOptions={[10]}
+          hideFooter={true}
+          sx={{
+            // add a box shadow
+            "& .MuiDataGrid-cell": {
+              boxShadow: "2px 0px 1px 0px rgba(0,0,0,0.75)",
+            },
+            boxShadow: "1px 8px 25px 10px rgba(0,0,0,0.3)",
+            
+          }}
         />
       </div>
     </div>

@@ -141,8 +141,10 @@ function getCountryCode(country) {
     case "France": return "FR";
     case "Germany": return "DE";
     case "Hungary": return "HU";
+    case "India": return "IN";
     case "Italy": return "IT";
     case "Japan": return "JP";
+    case "Korea": return "KR";
     case "Malaysia": return "MY";
     case "Mexico": return "MX";
     case "Monaco": return "MC";
